@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Epic link test</title>
+<style>
+  body { font-family: Segoe UI, Arial, sans-serif; color: #1c2430; background: #f6f7f9; margin: 0; padding: 24px 16px; }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  h2 { font-size: 16px; margin: 28px 0 8px; }
+  p { line-height: 1.45; margin: 0 0 10px; }
+  .note { background: #fff8e1; border: 1px solid #e6c65c; border-radius: 6px; padding: 10px 12px; }
+  .warn { color: #a12b1f; font-weight: 600; }
+  .empty { color: #5c6675; font-style: italic; }
+  table { border-collapse: collapse; width: 100%; background: #fff; }
+  th, td { border: 1px solid #cfd5dd; padding: 8px 10px; text-align: left; vertical-align: top; word-break: break-word; }
+  th { background: #e9edf2; font-size: 13px; }
+  td.raw, pre { font-family: Consolas, Menlo, monospace; font-size: 13px; }
+  pre { background: #fff; border: 1px solid #cfd5dd; padding: 8px 10px; white-space: pre-wrap; word-break: break-all; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Epic link test</h1>
+  <p class="note">Throwaway test page. Use a test patient only. This page stores nothing and sends nothing; it only displays what the link passed to it.</p>
+
+  <h2>Received after # (stays in this browser, never sent to the server)</h2>
+  <div id="hash"></div>
+
+  <h2>Received after ? (sent to the web server with the page request)</h2>
+  <div id="query"></div>
+
+  <h2>Browser</h2>
+  <pre id="ua"></pre>
+</main>
+<script>
+(function () {
+  function decode(text) {
+    try { return decodeURIComponent(text); } catch (e) { return text; }
+  }
+
+  function addText(parent, tag, text, className) {
+    var el = document.createElement(tag);
+    if (className) { el.className = className; }
+    el.appendChild(document.createTextNode(text));
+    parent.appendChild(el);
+    return el;
+  }
+
+  // Everything is written with text nodes so link content can never run as markup.
+  function render(targetId, raw, isQuery) {
+    var target = document.getElementById(targetId);
+    while (target.firstChild) { target.removeChild(target.firstChild); }
+
+    if (!raw) {
+      addText(target, 'p', 'Nothing received.', 'empty');
+      return;
+    }
+    if (isQuery) {
+      addText(target, 'p', 'These values left the workstation. Use # in the link instead of ?.', 'warn');
+    }
+    addText(target, 'p', 'Exactly as received:');
+    addText(target, 'pre', raw);
+
+    var table = document.createElement('table');
+    var head = document.createElement('tr');
+    addText(head, 'th', 'Name');
+    addText(head, 'th', 'Value as received');
+    addText(head, 'th', 'Value decoded');
+    table.appendChild(head);
+
+    var pairs = raw.split('&');
+    for (var i = 0; i < pairs.length; i++) {
+      if (!pairs[i]) { continue; }
+      var cut = pairs[i].indexOf('=');
+      var name = cut === -1 ? pairs[i] : pairs[i].substring(0, cut);
+      var value = cut === -1 ? '' : pairs[i].substring(cut + 1);
+      var row = document.createElement('tr');
+      addText(row, 'td', decode(name));
+      addText(row, 'td', value, 'raw');
+      addText(row, 'td', decode(value));
+      table.appendChild(row);
+    }
+    target.appendChild(table);
+  }
+
+  function update() {
+    render('hash', window.location.hash.replace(/^#/, ''), false);
+    render('query', window.location.search.replace(/^\?/, ''), true);
+  }
+
+  document.getElementById('ua').appendChild(document.createTextNode(navigator.userAgent));
+  update();
+  window.onhashchange = update;
+})();
+</script>
+</body>
+</html>
